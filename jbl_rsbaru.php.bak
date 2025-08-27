@@ -1,7 +1,7 @@
 <?php
 $title = "DAFTAR OUTLET BARU";
 session_start();
-include("session_check.php");
+//include("session_check.php");
 include("connection_jbl.inc.php");
 include("function.inc.php");
 include("header_alt2.inc.php");
@@ -16,12 +16,11 @@ if ($_POST['daftar'] == "DAFTAR") {
   $nohp = isset($_POST['nohp']) ? cleaninput($_POST['nohp']) : "";
   $alamat = isset($_POST['alamat']) ? cleaninput($_POST['alamat']) : "";
   $kabupaten = isset($_POST['kabupaten']) ? cleaninput($_POST['kabupaten']) : "";
-  // $idoutlet = isset($_POST['idoutlet']) ? cleaninput($_POST['idoutlet']) : "";
+  $idoutlet = isset($_POST['idoutlet']) ? cleaninput($_POST['idoutlet']) : "";
   $noeload = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
   $taxtype = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
   $document = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
-  $idoutlet = generateOutletId($nohp);
-
+  
   //NPWP Versi Baru 16 Digit (Apabila Tidak Diisi Oleh Sales)
   // $npwp = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "00.000.000.0-000.000";
 
@@ -50,7 +49,7 @@ if ($_POST['daftar'] == "DAFTAR") {
       $npwp = "0000000000000000";
     } 
   
-  if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $idoutlet && $kabupaten && $taxtype && $document) {
+  if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $kabupaten && $idoutlet && $taxtype && $document) {
 
     $sce = mysql_query("select nohp from validasi_rs where nohp ='$nohp'");
     if ($rce = mysql_fetch_object($sce)) {
@@ -143,7 +142,7 @@ if ($_POST['daftar'] == "DAFTAR") {
 
 <script>
   function validateForm() {
-    // var x01 = document.forms["myForm"]["idoutlet"].value;
+    var x01 = document.forms["myForm"]["idoutlet"].value;
     var x02 = document.forms["myForm"]["nama"].value;
     var x03 = document.forms["myForm"]["nohp"].value;
     var x04 = document.forms["myForm"]["kabupaten"].value;
@@ -151,10 +150,10 @@ if ($_POST['daftar'] == "DAFTAR") {
     var x06 = document.forms["myForm"]["alamat"].value;
 
 
-    // if (x01 == "") {
-    //   alert("ID Outlet harus diIsi");
-    //   return false;
-    // }
+    if (x01 == "") {
+      alert("ID Outlet harus diIsi");
+      return false;
+    }
 
     if (x02 == "") {
       alert("Nama harus diisi");
@@ -201,12 +200,12 @@ if ($_POST['daftar'] == "DAFTAR") {
 <main class="main-wrap setting-page mb-xxl">
    <!-- Form Section Start -->
       <form class="custom-form" method="post">
-			<!--      <div class="form-group row"> -->
-			<!-- <label class="col-sm-2 col-form-label">ID Outlet</label> -->
-			<!-- <div class="col-sm-12"> -->
-			<!-- 	 <input class="form-control" type="text" id="idoutlet" name="idoutlet" autocomplete="Off"> -->
-			<!-- </div> -->
-			<!--      </div> -->
+        <div class="form-group row">
+			<label class="col-sm-2 col-form-label">ID Outlet</label>
+			<div class="col-sm-12">
+				 <input class="form-control" type="text" id="idoutlet" name="idoutlet" autocomplete="Off">
+			</div>
+        </div>
 
         <div class="form-group row">
 			<label class="col-sm-12 col-form-label">Nama Reseller</label>

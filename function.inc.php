@@ -412,5 +412,24 @@ function cek_nofaktur($no_faktur){
     return $res;
   }
   
+function generateOutletId($nohp)
+{
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+
+   $nohp = str_replace(array("-", " "), "", $nohp);
+
+    // Ubah +62 atau 62 menjadi 0 di depan
+    if (substr($nohp, 0, 3) == '+62') {
+        $nohp = '0' . substr($nohp, 3);
+    } elseif (substr($nohp, 0, 2) == '62') {
+        $nohp = '0' . substr($nohp, 2);
+  }
+
+  $prefix='OT';
+
+  return $prefix . $nohp;
+}
 
  ?>

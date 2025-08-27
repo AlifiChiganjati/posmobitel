@@ -158,6 +158,7 @@ function postData($phone, $otp){
 								
 								session_set_cookie_params(28800);
 								session_start();
+    
 								$_SESSION['USER'] = $row_oRs->nohp;
 								$_SESSION['NAME'] = $row_oRs->nama;
 								$_SESSION['ROLE'] = "CUSTOMER";
@@ -238,6 +239,7 @@ function postData($phone, $otp){
 						if($curr_pin == $passEnkrip){
 							session_set_cookie_params(28800);
 							session_start();
+    					$_SESSION['IDEMPLOYEE'] = $row_oRs->idemployee;
 							$_SESSION['USER'] = $row_oRs->idsales;
 							$_SESSION['NAME'] = $row_oRs->name;
 							$_SESSION['ROLE'] = "JBL SF";
