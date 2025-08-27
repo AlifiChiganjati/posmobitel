@@ -5,139 +5,188 @@ include("session_check.php");
 include("connection_jbl.inc.php");
 include("function.inc.php");
 include("header_alt2.inc.php");
-$idsales = $_SESSION['IDSALES'];
-$depo = $_SESSION['DEPO'];
-$clustero = $_SESSION['CLUSTER'];
-$cluster = "Kantor Pusat";
+
+$idsales   = $_SESSION['IDSALES'];
+$depo      = $_SESSION['DEPO'];
+$clustero  = $_SESSION['CLUSTER'];
+$cluster   = "Kantor Pusat";
 
 if ($_POST['daftar'] == "DAFTAR") {
-  $nama = isset($_POST['nama']) ? cleaninput($_POST['nama']) : "";
-  $level = "1";
-  $nohp = isset($_POST['nohp']) ? cleaninput($_POST['nohp']) : "";
-  $alamat = isset($_POST['alamat']) ? cleaninput($_POST['alamat']) : "";
-  $kabupaten = isset($_POST['kabupaten']) ? cleaninput($_POST['kabupaten']) : "";
-  // $idoutlet = isset($_POST['idoutlet']) ? cleaninput($_POST['idoutlet']) : "";
-  $noeload = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
-  $taxtype = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
-  $document = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
-  $idoutlet = generateOutletId($nohp);
 
-  //NPWP Versi Baru 16 Digit (Apabila Tidak Diisi Oleh Sales)
-  // $npwp = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "00.000.000.0-000.000";
+    // Ambil data inputan
+    $nama      = isset($_POST['nama']) ? cleaninput($_POST['nama']) : "";
+    $level     = "1";
+    $nohp      = isset($_POST['nohp']) ? cleaninput($_POST['nohp']) : "";
+    $alamat    = isset($_POST['alamat']) ? cleaninput($_POST['alamat']) : "";
+    $kabupaten = isset($_POST['kabupaten']) ? cleaninput($_POST['kabupaten']) : "";
+    $noeload   = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
+    $taxtype   = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
+    $document  = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
+    $no_ktp    = isset($_POST['no_ktp']) ? cleaninput($_POST['no_ktp']) : "0000000000000000";
+    $idoutlet  = generateOutletId($nohp);
+    $npwp      = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "0000000000000000";
+    $pkp       = isset($_POST['pkp']) ? cleaninput($_POST['pkp']) : "";
+    $omob      = isset($_POST['omob']) ? cleaninput($_POST['omob']) : "";
+    $umkm      = isset($_POST['umkm']) ? cleaninput($_POST['umkm']) : "";
 
-  //NPWP Versi Baru 16 Digit (Apabila Tidak Diisi Oleh Sales)
-  $npwp = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "0000000000000000";
-
-  $pkp = isset($_POST['pkp']) ? cleaninput($_POST['pkp']) : "";
-  $omob = isset($_POST['omob']) ? cleaninput($_POST['omob']) : "";
-  $umkm = isset($_POST['umkm']) ? cleaninput($_POST['umkm']) : "";
-
-  //Validasi NPWP Kalau Ada Tanda (.) Titik Ataupun (-) Strip
-  if ($npwp != "" && (strpos($npwp, '-') !== false || strpos($npwp, '.') !== false ||!preg_match('/^[0-9]{16}$/', $npwp))) {
-    $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-    <div class='offcanvas-body small'>
-      <div class='app-info'>
-        <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-        <div class='content'>
-          <h3>Format NPWP Tidak Valid <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-          <a href='#'>NPWP harus 16 digit angka tanpa tanda titik (.) atau strip (-). Contoh yang benar: 0000000000000000</a>
-        </div>
-      </div>
-    </div>
-  </div>";
-  } else{
-     if ($npwp == "") {
-      $npwp = "0000000000000000";
-    } 
-  
-  if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $idoutlet && $kabupaten && $taxtype && $document) {
-
-    $sce = mysql_query("select nohp from validasi_rs where nohp ='$nohp'");
-    if ($rce = mysql_fetch_object($sce)) {
-      	$msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-          <div class='offcanvas-body small'>
-            <div class='app-info'>
-              <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-              <div class='content'>
-                <h3>Duplicate Data <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                <a href='#'>No Hp: $nohp sudah ada! Silahkan isi nomor yang lain!</a>
-              </div>
-            </div>
-          </div>
-        </div>";
+    // Validasi NPWP
+    if ($npwp != "" && (strpos($npwp, '-') !== false || strpos($npwp, '.') !== false || !preg_match('/^[0-9]{16}$/', $npwp))) {
+        $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                    <div class='offcanvas-body small'>
+                        <div class='app-info'>
+                            <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                            <div class='content'>
+                                <h3>Format NPWP Tidak Valid <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                <a href='#'>NPWP harus 16 digit angka tanpa tanda titik (.) atau strip (-). Contoh: 0000000000000000</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>";
     } else {
 
-      if (is_exist_customer($idoutlet)) {
-         $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-            <div class='offcanvas-body small'>
-              <div class='app-info'>
-                <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                <div class='content'>
-                  <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                  <a href='#'>Nomor ini sudah terdaftar</a>
-                </div>
-              </div>
-            </div>
-          </div>";
-      } else {
-        $transdate = date("d/m/Y");
-
-        $neweload = $noeload;
-        if (substr($neweload, 0, 3) == "088") {
-          $neweload = "62" . substr($neweload, 1);
+        if ($npwp == "") {
+            $npwp = "0000000000000000";
         }
-		
-    //NPWP Versi Lama 15 Digit (Apabila Tidak Diisi Oleh Sales)
-		// $npwp = (strlen($npwp) > 5)? $npwp : "00.000.000.0-000.000";
 
-    //NPWP Versi Baru 16 Digit (Apabila Tidak Diisi Oleh Sales)
-    $npwp = (strlen($npwp) > 5)? $npwp : "0000000000000000";
+        // Validasi input wajib
+        if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $idoutlet && $kabupaten && $taxtype && $document && $no_ktp) {
 
-        $sql = "insert ignore into validasi_rs (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten,  idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm) values
-          (now(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo' , '$cluster', '$transdate', 1, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm')";
+            $sce = mysql_query("SELECT nohp FROM validasi_rs WHERE nohp ='$nohp'");
+            if ($rce = mysql_fetch_object($sce)) {
+                $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Duplicate Data <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>No Hp: $nohp sudah ada! Silahkan isi nomor yang lain!</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>";
+            } elseif (is_exist_customer($idoutlet)) {
+                $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>Nomor ini sudah terdaftar</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>";
+            } else {
 
-        if (!mysql_query($sql)) {
-          $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-              <div class='offcanvas-body small'>
-                <div class='app-info'>
-                  <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                  <div class='content'>
-                    <h3>Internal Logic Error <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                    <a href='#'>Gagal dalam input data RS</a>
-                  </div>
-                </div>
-              </div>
-            </div>";
+                $transdate = date("d/m/Y");
+
+                $neweload = $noeload;
+                if (substr($neweload, 0, 3) == "088") {
+                    $neweload = "62" . substr($neweload, 1);
+                }
+
+                // Upload foto KTP
+                if (isset($_FILES["foto_ktp"]) && $_FILES["foto_ktp"]["error"] == 0) {
+
+                    $targetDir = __DIR__ . "/assets/images/ktp/";
+                    if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+
+                    $fileName   = time() . "_" . basename($_FILES["foto_ktp"]["name"]);
+                    $targetFile = $targetDir . $fileName;
+                    $fileType   = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+                    $allowed    = ["jpg", "jpeg", "png"];
+                    $filesize   = $_FILES["foto_ktp"]["size"];
+                    $dbPath     = "assets/images/ktp/" . $fileName;
+
+                    if (!in_array($fileType, $allowed)) {
+                        die("Hanya file JPG, JPEG, PNG yang diperbolehkan.");
+                    }
+
+                    if ($filesize <= 2097152) { // kurang dari 2MB
+                        if (!move_uploaded_file($_FILES["foto_ktp"]["tmp_name"], $targetFile)) {
+                            die("Gagal menyimpan file ke $targetFile");
+                        }
+                    } else { // compress
+                        if ($fileType == "jpg" || $fileType == "jpeg") {
+                            $image = imagecreatefromjpeg($_FILES["foto_ktp"]["tmp_name"]);
+                        } else {
+                            $image = imagecreatefrompng($_FILES["foto_ktp"]["tmp_name"]);
+                        }
+
+                        if (!$image) die("Gagal membaca file gambar");
+
+                        if ($fileType == "png") {
+                            imagepng($image, $targetFile, 6);
+                        } else {
+                            imagejpeg($image, $targetFile, 85);
+                        }
+
+                        imagedestroy($image);
+                    }
+
+                    // Simpan ke DB
+                    $sql = "INSERT IGNORE INTO validasi_rs 
+                            (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten, idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm, noktp, foto_ktp) 
+                            VALUES 
+                            (NOW(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo', '$cluster', '$transdate', 1, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm', '$no_ktp', '$fileName')";
+
+                    if (!mysql_query($sql)) {
+            $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>Gagal dalam input data RS</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>";
+                    } else {
+                        $msg =  "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>Pendaftaran RS Baru sudah diterima</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>";
+                    }
+
+                } else {
+          $msg ="<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>Foto KTP wajib diupload</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>"; 
+                }
+            }
+
         } else {
-          $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-              <div class='offcanvas-body small'>
-                <div class='app-info'>
-                  <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                  <div class='content'>
-                    <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                    <a href='#'>Pendaftaran RS Baru sudah diterima</a>
-                  </div>
-                </div>
-              </div>
-            </div>";
+      $msg ="<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
+                            <div class='offcanvas-body small'>
+                                <div class='app-info'>
+                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                                    <div class='content'>
+                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                        <a href='#'>Data Tidak Lengkap: $idsales - $nama - $level - $nohp - $no_ktp - $alamat - $kabupaten - $idoutlet - $depo</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>"; 
         }
-      }
     }
-  } else {
-     $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-      <div class='offcanvas-body small'>
-        <div class='app-info'>
-          <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-          <div class='content'>
-            <h3>Data Tidak Lengkap<i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-            <a href='#'>$idsales - $nama - $level - $nohp - $ktp - $alamat - $kabupaten - $kecamatan - $idoutlet - $depo</a>
-          </div>
-        </div>
-      </div>
-    </div>";
-    }
-  }
 }
+
 
 ?>
 
@@ -149,6 +198,7 @@ if ($_POST['daftar'] == "DAFTAR") {
     var x04 = document.forms["myForm"]["kabupaten"].value;
     var x05 = document.forms["myForm"]["document"].value;
     var x06 = document.forms["myForm"]["alamat"].value;
+    var x07 = document.forms["myForm"]["no_ktp"].value;
 
 
     // if (x01 == "") {
@@ -181,6 +231,10 @@ if ($_POST['daftar'] == "DAFTAR") {
       return false;
     }
 
+ if (x07 == "") {
+      alert("KTP harus diisi");
+      return false;
+    }
   }
 </script>
 
@@ -197,10 +251,16 @@ if ($_POST['daftar'] == "DAFTAR") {
     });
   });
 </script>
-
+<script>
+function previewKTP(event) {
+  const output = document.getElementById('preview_img');
+  output.src = URL.createObjectURL(event.target.files[0]);
+  output.classList.remove('d-none');
+}
+</script>
 <main class="main-wrap setting-page mb-xxl">
    <!-- Form Section Start -->
-      <form class="custom-form" method="post">
+      <form class="custom-form" method="post" enctype="multipart/form-data">
 			<!--      <div class="form-group row"> -->
 			<!-- <label class="col-sm-2 col-form-label">ID Outlet</label> -->
 			<!-- <div class="col-sm-12"> -->
@@ -262,7 +322,22 @@ if ($_POST['daftar'] == "DAFTAR") {
 			</div>
         </div>
 		
-		<div class="form-group row">
+    <div class="form-group row">
+			<label class="col-sm-12 col-form-label">Nomor Ktp </label>
+			<div class="col-sm-12">
+				 <input class="form-control" type="text" id="no_ktp" name="no_ktp" autocomplete="Off">
+			</div>
+    </div>
+
+    <!-- tambahkan image ktp -->
+    <div class="mb-3">
+  <label for="foto_ktp" class="form-label">Upload Foto KTP</label>
+  <input class="form-control" type="file" id="foto_ktp" name="foto_ktp" accept="image/*" required onchange="previewKTP(event)">
+  <div class="form-text">Format: JPG, JPEG, PNG (maks. 2MB)</div>
+  <img id="preview_img" src="" alt="Preview KTP" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
+    </div>
+ 
+    <div class="form-group row">
 			<label class="col-sm-12 col-form-label">NPWP </label>
 			<div class="col-sm-12">
 				 <input class="form-control" type="text" id="npwp" name="npwp" autocomplete="Off">
