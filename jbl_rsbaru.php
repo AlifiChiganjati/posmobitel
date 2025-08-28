@@ -29,6 +29,13 @@ if ($_POST['daftar'] == "DAFTAR") {
     $omob      = isset($_POST['omob']) ? cleaninput($_POST['omob']) : "";
     $umkm      = isset($_POST['umkm']) ? cleaninput($_POST['umkm']) : "";
     $noeload   = $nohp;
+$latitude  = isset($_POST['latitude']) ? cleaninput($_POST['latitude']) : '';
+$longitude = isset($_POST['longitude']) ? cleaninput($_POST['longitude']) : '';
+
+$lokasi_outlet = "";
+if (!empty($latitude) && !empty($longitude) && is_numeric($latitude) && is_numeric($longitude)) {
+    $lokasi_outlet = $latitude . "," . $longitude;
+}
 
     // Validasi NPWP
     if ($npwp != "" && (strpos($npwp, '-') !== false || strpos($npwp, '.') !== false || !preg_match('/^[0-9]{16}$/', $npwp))) {
@@ -85,108 +92,141 @@ if ($_POST['daftar'] == "DAFTAR") {
                 if (substr($neweload, 0, 3) == "088") {
                     $neweload = "62" . substr($neweload, 1);
                 }
+$uploadUrl = "https://nexacloud.id/"; 
+function uploadToRemote($fileTmp, $fileName, $fileType, $folder, $uploadUrl) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $uploadUrl . "posjbl/upload_foto.php");
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, [
+        "file"   => new CURLFile($fileTmp, $fileType, $fileName),
+        "folder" => $folder
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-                // Upload foto KTP
-                if (isset($_FILES["foto_ktp"]) && $_FILES["foto_ktp"]["error"] == 0) {
+    $response = curl_exec($ch);
+//                if (curl_errno($ch)) {
+//     echo "cURL Error: " . curl_error($ch);
+// }
+    curl_close($ch);
+     
+          // var_dump($response);
+          // exit();
+    $result = json_decode($response, true);
+    if ($result && $result["status"] == "ok") {
+        return $result["url"]; // URL lengkap
+    }
+    return "";
+}
 
-                    $targetDir = __DIR__ . "/assets/images/ktp/";
-                    if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+/* ===== Upload KTP ===== */
+$dbPathKtp = "";
+if (isset($_FILES["foto_ktp"]) && $_FILES["foto_ktp"]["error"] == 0) {
+    $fileName = time() . "_ktp_" . basename($_FILES["foto_ktp"]["name"]);
+    $fileType = $_FILES["foto_ktp"]["type"];
+    $fileSize = $_FILES["foto_ktp"]["size"];
+    $fileTmp  = $_FILES["foto_ktp"]["tmp_name"];
 
-                    $fileName   = time() . "_" . basename($_FILES["foto_ktp"]["name"]);
-                    $targetFile = $targetDir . $fileName;
-                    $fileType   = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
-                    $allowed    = ["jpg", "jpeg", "png"];
-                    $filesize   = $_FILES["foto_ktp"]["size"];
-                    $dbPath     = "assets/images/ktp/" . $fileName;
-
-                    if (!in_array($fileType, $allowed)) {
-                        die("Hanya file JPG, JPEG, PNG yang diperbolehkan.");
-                    }
-
-                    if ($filesize <= 2097152) { // kurang dari 2MB
-                        if (!move_uploaded_file($_FILES["foto_ktp"]["tmp_name"], $targetFile)) {
-                            die("Gagal menyimpan file ke $targetFile");
-                        }
-                    } else { // compress
-                        if ($fileType == "jpg" || $fileType == "jpeg") {
-                            $image = imagecreatefromjpeg($_FILES["foto_ktp"]["tmp_name"]);
-                        } else {
-                            $image = imagecreatefrompng($_FILES["foto_ktp"]["tmp_name"]);
-                        }
-
-                        if (!$image) die("Gagal membaca file gambar");
-
-                        if ($fileType == "png") {
-                            imagepng($image, $targetFile, 6);
-                        } else {
-                            imagejpeg($image, $targetFile, 85);
-                        }
-
-                        imagedestroy($image);
-                    }
-
-                    // Simpan ke DB
-                    $sql = "INSERT IGNORE INTO validasi_rs 
-                            (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten, idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm, noktp, foto_ktp) 
-                            VALUES 
-                            (NOW(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo', '$cluster', '$transdate', 1, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm', '$no_ktp', '$fileName')";
-
-                    if (!mysql_query($sql)) {
-            $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-                            <div class='offcanvas-body small'>
-                                <div class='app-info'>
-                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                                    <div class='content'>
-                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                                        <a href='#'>Gagal dalam input data RS</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>";
-                    } else {
-                        $msg =  "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-                            <div class='offcanvas-body small'>
-                                <div class='app-info'>
-                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                                    <div class='content'>
-                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                                        <a href='#'>Pendaftaran RS Baru sudah diterima</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>";
-                    }
-
-                } else {
-          $msg ="<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-                            <div class='offcanvas-body small'>
-                                <div class='app-info'>
-                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                                    <div class='content'>
-                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                                        <a href='#'>Foto KTP wajib diupload</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>"; 
-                }
-            }
-
+    // Jika > 2MB → kompres dulu
+    if ($fileSize > 2097152) {
+        $tempFile = sys_get_temp_dir() . "/" . $fileName;
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        if ($ext == "png") {
+            $image = imagecreatefrompng($fileTmp);
+            imagepng($image, $tempFile, 6);
         } else {
-      $msg ="<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1' id='offcanvas'>
-                            <div class='offcanvas-body small'>
-                                <div class='app-info'>
-                                    <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
-                                    <div class='content'>
-                                        <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                                        <a href='#'>Data Tidak Lengkap: $idsales - $nama - $level - $nohp - $no_ktp - $alamat - $kabupaten - $idoutlet - $depo</a>
-                                    </div>
-                                </div>
+            $image = imagecreatefromjpeg($fileTmp);
+            imagejpeg($image, $tempFile, 85);
+        }
+        imagedestroy($image);
+        $fileTmp = $tempFile;
+    }
+
+    $dbPathKtp = uploadToRemote($fileTmp, $fileName, $fileType, "ktp", $uploadUrl);
+          if ($dbPathKtp) {
+    $dbPathKtp = basename($dbPathKtp);
+}
+}
+
+
+/* ===== Upload Foto Outlet ===== */
+$dbPathOutlet = "";
+if (isset($_FILES["foto_outlet"]) && $_FILES["foto_outlet"]["error"] == 0) {
+    $fileName = time() . "_outlet_" . basename($_FILES["foto_outlet"]["name"]);
+    $fileType = $_FILES["foto_outlet"]["type"];
+    $fileSize = $_FILES["foto_outlet"]["size"];
+    $fileTmp  = $_FILES["foto_outlet"]["tmp_name"];
+
+    if ($fileSize > 2097152) {
+        $tempFile = sys_get_temp_dir() . "/" . $fileName;
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        if ($ext == "png") {
+            $image = imagecreatefrompng($fileTmp);
+            imagepng($image, $tempFile, 6);
+        } else {
+            $image = imagecreatefromjpeg($fileTmp);
+            imagejpeg($image, $tempFile, 85);
+        }
+        imagedestroy($image);
+        $fileTmp = $tempFile;
+    }
+
+    $dbPathOutlet = uploadToRemote($fileTmp, $fileName, $fileType, "outlet", $uploadUrl);
+          if ($dbPathOutlet) {
+    $dbPathOutlet = basename($dbPathOutlet);
+}
+
+}
+
+
+/* ===== Simpan ke DB ===== */
+if ($dbPathKtp != "") {
+    $sql = "INSERT IGNORE INTO validasi_rs 
+            (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten, idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm, noktp, foto_ktp, foto_outlet, location) 
+            VALUES 
+            (NOW(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo', '$cluster', '$transdate', 0, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm', '$no_ktp', '$dbPathKtp', '$dbPathOutlet', '$lokasi_outlet')";
+
+    if (!mysql_query($sql)) {
+        $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1'>
+                    <div class='offcanvas-body small'>
+                        <div class='app-info'>
+                            <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                            <div class='content'>
+                                <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                <a href='#'>Gagal dalam input data RS</a>
                             </div>
-                        </div>"; 
+                        </div>
+                    </div>
+                </div>";
+    } else {
+        $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1'>
+                    <div class='offcanvas-body small'>
+                        <div class='app-info'>
+                            <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                            <div class='content'>
+                                <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                                <a href='#'>Pendaftaran RS Baru sudah diterima</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>";
+    }
+} else {
+    $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1'>
+                <div class='offcanvas-body small'>
+                    <div class='app-info'>
+                        <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
+                        <div class='content'>
+                            <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
+                            <a href='#'>Foto KTP wajib diupload</a>
+                        </div>
+                    </div>
+                </div>
+            </div>";
+           }
+            }
         }
     }
-}
+} // ←
 
 
 ?>
@@ -254,10 +294,18 @@ if ($_POST['daftar'] == "DAFTAR") {
 </script>
 <script>
 function previewKTP(event) {
-  const output = document.getElementById('preview_img');
+  const output = document.getElementById('preview_img_ktp');
   output.src = URL.createObjectURL(event.target.files[0]);
   output.classList.remove('d-none');
 }
+
+function previewOutlet(event) {
+  const output = document.getElementById('preview_img_outlet');
+  output.src = URL.createObjectURL(event.target.files[0]);
+  output.classList.remove('d-none');
+}
+
+
 </script>
 <main class="main-wrap setting-page mb-xxl">
    <!-- Form Section Start -->
@@ -289,6 +337,8 @@ function previewKTP(event) {
 			<!-- 	<input class="form-control" type="text" id="noeload" name="noeload" autocomplete="Off" value=""> -->
 			<!-- </div> -->
 			<!--      </div> -->
+<input type="hidden" name="latitude" id="latitude">
+<input type="hidden" name="longitude" id="longitude">
 
         <div class="form-group row">
 			<label class="col-sm-12 col-form-label">Alamat </label>
@@ -323,6 +373,15 @@ function previewKTP(event) {
 			</div>
         </div>
 		
+
+  <!-- tambahkan image outlet -->
+    <div class="mb-3">
+  <label for="foto_outlet" class="form-label">Upload Foto OUTLET</label>
+  <input class="form-control" type="file" id="foto_outlet" name="foto_outlet" accept="image/*" required onchange="previewOutlet(event)">
+  <div class="form-text">Format: JPG, JPEG, PNG (maks. 2MB)</div>
+  <img id="preview_img_outlet" src="" alt="Preview OUTLET" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
+    </div>
+
     <div class="form-group row">
 			<label class="col-sm-12 col-form-label">Nomor Ktp </label>
 			<div class="col-sm-12">
@@ -335,7 +394,7 @@ function previewKTP(event) {
   <label for="foto_ktp" class="form-label">Upload Foto KTP</label>
   <input class="form-control" type="file" id="foto_ktp" name="foto_ktp" accept="image/*" required onchange="previewKTP(event)">
   <div class="form-text">Format: JPG, JPEG, PNG (maks. 2MB)</div>
-  <img id="preview_img" src="" alt="Preview KTP" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
+  <img id="preview_img_ktp" src="" alt="Preview KTP" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
     </div>
  
     <div class="form-group row">

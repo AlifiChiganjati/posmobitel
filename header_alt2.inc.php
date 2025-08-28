@@ -29,6 +29,8 @@
 
     <!-- Style css -->
     <link rel="stylesheet" id="change-link" type="text/css" href="assets/css/style.css">
+        <script src="auto_check_in.js"></script>
+
   </head>
 
   <?php
