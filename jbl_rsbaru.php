@@ -19,7 +19,7 @@ if ($_POST['daftar'] == "DAFTAR") {
     $nohp      = isset($_POST['nohp']) ? cleaninput($_POST['nohp']) : "";
     $alamat    = isset($_POST['alamat']) ? cleaninput($_POST['alamat']) : "";
     $kabupaten = isset($_POST['kabupaten']) ? cleaninput($_POST['kabupaten']) : "";
-    $noeload   = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
+    // $noeload   = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
     $taxtype   = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
     $document  = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
     $no_ktp    = isset($_POST['no_ktp']) ? cleaninput($_POST['no_ktp']) : "0000000000000000";
@@ -28,6 +28,7 @@ if ($_POST['daftar'] == "DAFTAR") {
     $pkp       = isset($_POST['pkp']) ? cleaninput($_POST['pkp']) : "";
     $omob      = isset($_POST['omob']) ? cleaninput($_POST['omob']) : "";
     $umkm      = isset($_POST['umkm']) ? cleaninput($_POST['umkm']) : "";
+    $noeload   = $nohp;
 
     // Validasi NPWP
     if ($npwp != "" && (strpos($npwp, '-') !== false || strpos($npwp, '.') !== false || !preg_match('/^[0-9]{16}$/', $npwp))) {
@@ -282,12 +283,12 @@ function previewKTP(event) {
 			</div>
         </div>
 
-        <div class="form-group row">
-			<label class="col-sm-12 col-form-label">Nomor Eload</label>
-			<div class="col-sm-12">
-				<input class="form-control" type="text" id="noeload" name="noeload" autocomplete="Off" value="">
-			</div>
-        </div>
+			<!--      <div class="form-group row"> -->
+			<!-- <label class="col-sm-12 col-form-label">Nomor Eload</label> -->
+			<!-- <div class="col-sm-12"> -->
+			<!-- 	<input class="form-control" type="text" id="noeload" name="noeload" autocomplete="Off" value=""> -->
+			<!-- </div> -->
+			<!--      </div> -->
 
         <div class="form-group row">
 			<label class="col-sm-12 col-form-label">Alamat </label>
