@@ -22,7 +22,7 @@ if ($_POST['daftar'] == "DAFTAR") {
     // $noeload   = isset($_POST['noeload']) ? cleaninput($_POST['noeload']) : "";
     $taxtype   = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
     $document  = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
-    $no_ktp    = isset($_POST['no_ktp']) ? cleaninput($_POST['no_ktp']) : "0000000000000000";
+    $no_ktp    = isset($_POST['no_ktp']) ? cleaninput($_POST['no_ktp']) : "";
     $idoutlet  = generateOutletId($nohp);
     $npwp      = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "0000000000000000";
     $pkp       = isset($_POST['pkp']) ? cleaninput($_POST['pkp']) : "";
@@ -57,7 +57,7 @@ if (!empty($latitude) && !empty($longitude) && is_numeric($latitude) && is_numer
         }
 
         // Validasi input wajib
-        if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $idoutlet && $kabupaten && $taxtype && $document && $no_ktp) {
+        if ($idsales && $nama && $level && $nohp && $noeload && $alamat && $idoutlet && $kabupaten && $taxtype && $document ) {
 
             $sce = mysql_query("SELECT nohp FROM validasi_rs WHERE nohp ='$nohp'");
             if ($rce = mysql_fetch_object($sce)) {
@@ -93,30 +93,6 @@ if (!empty($latitude) && !empty($longitude) && is_numeric($latitude) && is_numer
                     $neweload = "62" . substr($neweload, 1);
                 }
 $uploadUrl = "https://nexacloud.id/"; 
-function uploadToRemote($fileTmp, $fileName, $fileType, $folder, $uploadUrl) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $uploadUrl . "posjbl/upload_foto.php");
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, [
-        "file"   => new CURLFile($fileTmp, $fileType, $fileName),
-        "folder" => $folder
-    ]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    $response = curl_exec($ch);
-//                if (curl_errno($ch)) {
-//     echo "cURL Error: " . curl_error($ch);
-// }
-    curl_close($ch);
-     
-          // var_dump($response);
-          // exit();
-    $result = json_decode($response, true);
-    if ($result && $result["status"] == "ok") {
-        return $result["url"]; // URL lengkap
-    }
-    return "";
-}
 
 /* ===== Upload KTP ===== */
 $dbPathKtp = "";
@@ -179,7 +155,7 @@ if (isset($_FILES["foto_outlet"]) && $_FILES["foto_outlet"]["error"] == 0) {
 
 
 /* ===== Simpan ke DB ===== */
-if ($dbPathKtp != "") {
+if ($dbPathOutlet != "") {
     $sql = "INSERT IGNORE INTO validasi_rs 
             (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten, idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm, noktp, foto_ktp, foto_outlet, location) 
             VALUES 
@@ -217,7 +193,7 @@ if ($dbPathKtp != "") {
                         <img src='assets/images/logo/mail.png' class='img-fluid' alt=''>
                         <div class='content'>
                             <h3>Request diterima! <i data-feather='x' data-bs-dismiss='offcanvas'></i></h3>
-                            <a href='#'>Foto KTP wajib diupload</a>
+                            <a href='#'>Foto Outlet wajib diupload</a>
                         </div>
                     </div>
                 </div>
@@ -307,6 +283,66 @@ function previewOutlet(event) {
 
 
 </script>
+
+<script>
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(success, error, {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    });
+  } else {
+    alert("Browser tidak mendukung geolocation.");
+  }
+}
+
+function success(position) {
+  document.getElementById("latitude").value = position.coords.latitude;
+  document.getElementById("longitude").value = position.coords.longitude;
+}
+
+function error(err) {
+  alert("Gagal mengambil lokasi: " + err.message);
+}
+
+// panggil otomatis saat load
+window.onload = getLocation;
+</script>
+
+<script>
+function validateNoHP(input) {
+  let val = input.value;
+
+  // hapus semua karakter non-angka
+  val = val.replace(/\D/g, '');
+  input.value = val;
+
+  // cek panjang
+  if (val.length < 9 || val.length > 13) {
+    document.getElementById("nohp_error").innerText = "Nomor HP harus 9–13 digit angka";
+  } else {
+    document.getElementById("nohp_error").innerText = "";
+  }
+}
+
+function validateKTP(input) {
+  let val = input.value;
+
+  // hapus semua karakter non-angka
+  val = val.replace(/\D/g, '');
+  input.value = val;
+
+  // cek panjang
+  if (val.length != 16) {
+    document.getElementById("ktp_error").innerText = "No KTP harus 16 digit angka";
+  } else {
+    document.getElementById("ktp_error").innerText = "";
+  }
+}
+</script>
+
+
 <main class="main-wrap setting-page mb-xxl">
    <!-- Form Section Start -->
       <form class="custom-form" method="post" enctype="multipart/form-data">
@@ -318,17 +354,18 @@ function previewOutlet(event) {
 			<!--      </div> -->
 
         <div class="form-group row">
-			<label class="col-sm-12 col-form-label">Nama Reseller</label>
+			<label class="col-sm-12 col-form-label">*Nama Reseller</label>
 			<div class="col-sm-12">
-				<input class="form-control" type="text" id="nama" name="nama" autocomplete="Off">
+				<input class="form-control" type="text" id="nama" name="nama" autocomplete="Off" required>
 			</div>
         </div>
 
         <div class="form-group row">
-			<label class="col-sm-12 col-form-label">Nomor Reseller</label>
+			<label class="col-sm-12 col-form-label">*Nomor Reseller</label>
 			<div class="col-sm-12">
-				<input class="form-control" type="text" id="nohp" name="nohp" autocomplete="Off" value="">
-			</div>
+				<input class="form-control" type="text" id="nohp" name="nohp" autocomplete="Off" value="" oninput="validateNoHP(this)" required>
+         <small id="nohp_error" class="text-danger"></small>
+	</div>
         </div>
 
 			<!--      <div class="form-group row"> -->
@@ -341,14 +378,14 @@ function previewOutlet(event) {
 <input type="hidden" name="longitude" id="longitude">
 
         <div class="form-group row">
-			<label class="col-sm-12 col-form-label">Alamat </label>
+			<label class="col-sm-12 col-form-label">*Alamat </label>
 			<div class="col-sm-12">
-				 <input class="form-control" type="text" id="alamat" name="alamat" autocomplete="Off">
+				 <input class="form-control" type="text" id="alamat" name="alamat" autocomplete="Off" required>
 			</div>
         </div>
 		
         <div class="form-group row">
-			<label class="col-sm-12 col-form-label">Kabupaten</label>
+			<label class="col-sm-12 col-form-label">*Kabupaten</label>
 			<div class="col-sm-12">
 				<select id="kabupaten" name="kabupaten" class="form-control">
                 <option value="" selected>Pilih Kabupaten</option>
@@ -375,8 +412,8 @@ function previewOutlet(event) {
 		
 
   <!-- tambahkan image outlet -->
-    <div class="mb-3">
-  <label for="foto_outlet" class="form-label">Upload Foto OUTLET</label>
+    <div class="mb-3 my-2">
+  <label for="foto_outlet" class="form-label">*Upload Foto OUTLET</label>
   <input class="form-control" type="file" id="foto_outlet" name="foto_outlet" accept="image/*" required onchange="previewOutlet(event)">
   <div class="form-text">Format: JPG, JPEG, PNG (maks. 2MB)</div>
   <img id="preview_img_outlet" src="" alt="Preview OUTLET" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
@@ -385,14 +422,15 @@ function previewOutlet(event) {
     <div class="form-group row">
 			<label class="col-sm-12 col-form-label">Nomor Ktp </label>
 			<div class="col-sm-12">
-				 <input class="form-control" type="text" id="no_ktp" name="no_ktp" autocomplete="Off">
+        <input class="form-control" type="text" id="no_ktp" name="no_ktp" autocomplete="Off"  oninput="validateKTP(this)">
+        <small id="ktp_error" class="text-danger"></small>
 			</div>
     </div>
 
     <!-- tambahkan image ktp -->
     <div class="mb-3">
   <label for="foto_ktp" class="form-label">Upload Foto KTP</label>
-  <input class="form-control" type="file" id="foto_ktp" name="foto_ktp" accept="image/*" required onchange="previewKTP(event)">
+  <input class="form-control" type="file" id="foto_ktp" name="foto_ktp" accept="image/*" onchange="previewKTP(event)">
   <div class="form-text">Format: JPG, JPEG, PNG (maks. 2MB)</div>
   <img id="preview_img_ktp" src="" alt="Preview KTP" class="mt-2 img-thumbnail d-none" style="max-height:200px;">
     </div>

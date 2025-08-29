@@ -414,22 +414,37 @@ function cek_nofaktur($no_faktur){
   
 function generateOutletId($nohp)
 {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
+    $prefix = 'JBLTK';
+    $date = date('dmy'); // Tanggal: 250624
+    // $time = date('His'); // Waktu: 102530
+    // $random= rand(1000, 9999);
+    $last4 = substr($nohp, -4);
+  return $prefix . $date  . $last4;
+}
+
+function uploadToRemote($fileTmp, $fileName, $fileType, $folder, $uploadUrl) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $uploadUrl . "posjbl/upload_foto.php");
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, [
+        "file"   => new CURLFile($fileTmp, $fileType, $fileName),
+        "folder" => $folder
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+//                if (curl_errno($ch)) {
+//     echo "cURL Error: " . curl_error($ch);
+// }
+    curl_close($ch);
+     
+          // var_dump($response);
+          // exit();
+    $result = json_decode($response, true);
+    if ($result && $result["status"] == "ok") {
+        return $result["url"]; // URL lengkap
     }
-
-   $nohp = str_replace(array("-", " "), "", $nohp);
-
-    // Ubah +62 atau 62 menjadi 0 di depan
-    if (substr($nohp, 0, 3) == '+62') {
-        $nohp = '0' . substr($nohp, 3);
-    } elseif (substr($nohp, 0, 2) == '62') {
-        $nohp = '0' . substr($nohp, 2);
-  }
-
-  $prefix='OT';
-
-  return $prefix . $nohp;
+    return "";
 }
 
  ?>
