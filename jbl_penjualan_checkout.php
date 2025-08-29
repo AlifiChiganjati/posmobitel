@@ -32,7 +32,7 @@ function discount($level){
 }
 
 $viax = '';
-	$qry = "select account_no, account_name from accounts where (account_name like 'Kas Besar - $depo_replace%' OR account_name LIKE '%$depo_replace') order by account_no";
+	$qry = "select account_no, account_name from accounts where aktif=1 order by account_no";
 	//echo $qry;
 	$rs = mysql_query($qry);
   $i=0;
@@ -59,6 +59,7 @@ if($_POST['proses'] == "PROSES KE PEMBAYARAN"){
 			$arrsales = data_salesman($idsales);
 				if($arrsales){
 					$taxdate = date("d/m/Y");
+					$depo = $arrsales->depo;
 					//$nofaktur = $arrsales->id_department ."-A12/". $idsales ."-". date("mY-dHis");
 					if($via == "TOP"){
 						$nofaktur = $arrsales->id_department ."-K05/". $idsales ."-". date("mY-dHis");
@@ -86,7 +87,7 @@ if($_POST['proses'] == "PROSES KE PEMBAYARAN"){
 					$row = mysql_num_rows($sql);
 					if($row > 0){ 
 						while($sx = mysql_fetch_object($sql)){
-							mysql_query("update sales_invoice set id_customer='$idcustomer', via='$via', status = 1, no_faktur='$nofaktur', taxdate='$taxdate', transdate='$transdate', duedate= '$tempo', data1='$data1', data2='$data2', npwp='$isnpwp', umkm='$isumkm' where id='$sx->id'");
+							mysql_query("update sales_invoice set id_customer='$idcustomer', via='$via', status = 4, no_faktur='$nofaktur', taxdate='$taxdate', transdate='$transdate', duedate= '$tempo', data1='$data1', data2='$data2', npwp='$isnpwp', umkm='$isumkm', department='$depo' where id='$sx->id'");
 							$id_product=$sx->id_product;
 							$gudang = $sx->warehouse_name;
 
@@ -96,7 +97,7 @@ if($_POST['proses'] == "PROSES KE PEMBAYARAN"){
 
 							$final_stok = $stok_sales-$qty;
 
-							$mts = mysql_query("insert into mutasi_stok set date_process=now(), warehouse='$gudang', warehouse_reference='$idcustomer', id_product='$id_product', description='Penjualan', reff='$nofaktur', source='sales invoice',
+							$mts = mysql_query("insert into mutasi set date_process=now(), warehouse='$gudang', warehouse_reference='$idcustomer', id_product='$id_product', description='Penjualan', reff='$nofaktur', source='sales invoice',
 										qty_in='0', qty_out='$qty', last_qty='$stok_sales', curr_qty='$final_stok'");
 							if($mts && mysql_affected_rows() > 0){
 								mysql_query("update stock_master set qty='$final_stok' where id_product='$id_product' and warehouse='$gudang'");

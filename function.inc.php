@@ -412,14 +412,12 @@ function cek_nofaktur($no_faktur){
     return $res;
   }
   
-function generateOutletId($nohp)
+function generateOutletId($id)
 {
     $prefix = 'JBLTK';
-    $date = date('dmy'); // Tanggal: 250624
     // $time = date('His'); // Waktu: 102530
     // $random= rand(1000, 9999);
-    $last4 = substr($nohp, -4);
-  return $prefix . $date  . $last4;
+  return $prefix . $id;
 }
 
 function uploadToRemote($fileTmp, $fileName, $fileType, $folder, $uploadUrl) {

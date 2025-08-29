@@ -13,6 +13,16 @@ $cluster   = "Kantor Pusat";
 
 if ($_POST['daftar'] == "DAFTAR") {
 
+// $regis_no="SELECT MAX(registration_no) as last_no FROM customers ORDER BY created_at DESC LIMIT 1"; // --- function increment regis _no?
+$regis_no="SELECT COUNT(id) as last_no FROM validasi_rs";
+
+$result_regis = mysql_query($regis_no);
+$row_regis = mysql_fetch_assoc($result_regis);
+$lastNo = $row_regis['last_no'] ? $row_regis['last_no'] : 0;
+$newNo  = $lastNo + 1;
+$formattedNo = str_pad($newNo, 5, '0', STR_PAD_LEFT);
+$prefix = "JBLTK";
+$idoutlet = $prefix . $formattedNo;
     // Ambil data inputan
     $nama      = isset($_POST['nama']) ? cleaninput($_POST['nama']) : "";
     $level     = "1";
@@ -23,7 +33,6 @@ if ($_POST['daftar'] == "DAFTAR") {
     $taxtype   = isset($_POST['taxtype']) ? cleaninput($_POST['taxtype']) : "";
     $document  = isset($_POST['document']) ? cleaninput($_POST['document']) : "";
     $no_ktp    = isset($_POST['no_ktp']) ? cleaninput($_POST['no_ktp']) : "";
-    $idoutlet  = generateOutletId($nohp);
     $npwp      = isset($_POST['npwp']) ? cleaninput($_POST['npwp']) : "0000000000000000";
     $pkp       = isset($_POST['pkp']) ? cleaninput($_POST['pkp']) : "";
     $omob      = isset($_POST['omob']) ? cleaninput($_POST['omob']) : "";
@@ -153,13 +162,12 @@ if (isset($_FILES["foto_outlet"]) && $_FILES["foto_outlet"]["error"] == 0) {
 
 }
 
-
 /* ===== Simpan ke DB ===== */
 if ($dbPathOutlet != "") {
     $sql = "INSERT IGNORE INTO validasi_rs 
             (tanggal, idsales, nama, nohp, noeload, level, alamat, kabupaten, idoutlet, depo, cluster, transdate, status, category, category_harga, wpname, taxtype, document, npwp, pkp, omob, umkm, noktp, foto_ktp, foto_outlet, location) 
             VALUES 
-            (NOW(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo', '$cluster', '$transdate', 0, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm', '$no_ktp', '$dbPathKtp', '$dbPathOutlet', '$lokasi_outlet')";
+            (NOW(), '$idsales', '$nama', '$nohp', '$neweload', '$level', '$alamat', '$kabupaten', '$idoutlet', '$depo', '$cluster', '$transdate', 1, 'DEALER PRICE LIST', 'DEALER PRICE LIST', '$nama', '$taxtype', '$document', '$npwp', '$pkp', '$omob', '$umkm', '$no_ktp', '$dbPathKtp', '$dbPathOutlet', '$lokasi_outlet')";
 
     if (!mysql_query($sql)) {
         $msg = "<div class='offcanvas offcanvas-bottom addtohome-popup show' tabindex='-1'>
